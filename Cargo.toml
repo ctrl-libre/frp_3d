@@ -1,0 +1,47 @@
+[package]
+name = "frp-test"
+version = "0.0.1"
+authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
+description = "A opengl FRP test"
+homepage = "https://github.com/moredread/frp-test"
+repository = "https://github.com/moredread/frp-test"
+readme = "README.md"
+keywords = ["frp", "reactive", "event", "window"]
+license = "LGPL-3.0+"
+
+
+[dependencies]
+carboxyl = "*"
+image = "*"
+clock_ticks = "*"
+
+[dependencies.pistoncore-input]
+git = "https://github.com/PistonDevelopers/input"
+
+[dependencies.carboxyl_window]
+git = "https://github.com/aepsil0n/carboxyl_window"
+
+[dependencies.pistoncore-window]
+git = "https://github.com/PistonDevelopers/window"
+
+
+[dependencies]
+glutin = "*"
+
+[dependencies.shader_version]
+git = "https://github.com/PistonDevelopers/shader_version"
+
+[dependencies.pistoncore-glutin_window]
+git = "https://github.com/PistonDevelopers/glutin_window"
+
+[dependencies.piston2d-graphics]
+git = "https://github.com/PistonDevelopers/graphics"
+
+[dependencies.glium]
+default-features = false
+
+[dependencies.piston2d-glium_graphics]
+git = "https://github.com/PistonDevelopers/glium_graphics"
+
+[dependencies.elmesque]
+git = "https://github.com/mitchmindtree/elmesque"
