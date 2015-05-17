@@ -7,9 +7,10 @@ use elmesque::{ Element, Renderer };
 use shader_version::OpenGL;
 use window::WindowSettings;
 use std::sync::Arc;
+use glium::backend::{Facade};
 
 pub trait Node: Send + Sync + 'static {
-    fn draw(&self, surface: &Surface) -> Result<(), DrawError> { Ok(()) }
+    fn draw(&self, surface: &mut Surface, display: &Facade) -> Result<(), DrawError>;
 }
 
 pub fn run_glium<F>(settings: WindowSettings, app: F)
@@ -30,6 +31,8 @@ pub fn run_glium<F>(settings: WindowSettings, app: F)
         let ((w, h), element) = scene.sample();
         let mut target = glium_window.draw();
         target.clear_color(0.0, 0.0, 0.0, 0.0);
+        target.clear_depth(1.0);
+        element.draw(&mut target, &glium_window);
         target.finish();
     });
 }
