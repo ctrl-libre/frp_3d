@@ -1,163 +1,108 @@
-//! Simple interactive application
-//!
-//! This example is very simple. You can move around a circle that follows the
-//! mouse position. Using the mouse cursor you can change the color of the
-//! circle and a little number displayed on its center.
-//!
-//! The event handling logic here is trivial, since the output is a very simple
-//! function of input events. It is intended to demonstrate how you can set up
-//! an application using carboxyl, carboxyl_window and elmesque.
-
-extern crate elmesque;
-extern crate graphics;
-#[macro_use(implement_vertex,uniform)]
-extern crate glium;
-extern crate glium_graphics;
-extern crate shader_version;
-extern crate input;
-extern crate window;
-extern crate glutin_window;
-#[macro_use(lift)]
-extern crate carboxyl;
+#[macro_use(gfx_vertex, gfx_parameters)]
+extern crate gfx;
+extern crate gfx_device_gl;
+extern crate glutin;
 extern crate carboxyl_window;
-extern crate nalgebra;
-extern crate num;
+extern crate window;
+extern crate input;
+extern crate shader_version;
+extern crate glutin_window;
+extern crate gfx_func;
+extern crate cgmath;
 
-use window::WindowSettings;
-use carboxyl::Signal;
-use carboxyl_window::StreamingWindow;
-use runners::Node;
-use std::sync::Arc;
-use cam::Camera;
-use nalgebra::PerspMat3;
-use glium::{Surface, DrawError};
-use glium::backend::{Facade};
-use glium::draw_parameters::{DrawParameters, DepthTest, BackfaceCullingMode};
+use cgmath::FixedArray;
+use cgmath::{Matrix4, Point3, Vector3};
+use cgmath::{Transform, AffineMatrix3};
+use std::rc::Rc;
+use std::cell::RefCell;
+use carboxyl_window::{ SourceWindow, EventSource };
+use window::{ WindowSettings };
+use shader_version::OpenGL;
+use glutin_window::GlutinWindow;
+use gfx::traits::{ FactoryExt, ToSlice };
+use gfx::{ Stream, Resources, ClearData };
+use gfx::batch::Context;
+use gfx_func::{ Element };
 
-mod runners;
-mod cam;
-
-static vertex_shader: &'static str = "
-    #version 110
-
-    uniform mat4 model_view_proj;
-
-    attribute vec3 position;
-    attribute vec2 texcoord;
-
-    varying vec2 v_texcoord;
-
-    void main() {
-        v_texcoord = texcoord;
-        gl_Position = model_view_proj * vec4(position, 1.0);
-    }
-";
-
-static fragment_shader: &'static str = 
-"
-    #version 110
-
-    varying vec2 v_texcoord;
-
-    void main() {
-        gl_FragColor = vec4(v_texcoord, 1.0, 1.0);
-    }
-";
+pub mod shared_win;
 
 
-#[derive(Clone, Debug)]
-struct Model;
+gfx_vertex!( Vertex {
+    a_Pos@ pos: [f32; 3],
+    a_Color@ color: [f32; 3],
+});
 
-#[derive(Clone, Debug)]
-struct Triangle {
-    vertices: [[f64; 3]; 3],
-    camera: Camera<f64>,
-}
-#[derive(Clone, Debug)]
-struct EmptyNode;
+gfx_parameters!( Params {
+    model_view_proj@ model_view_proj: [[f32; 4]; 4],
+});
 
-#[derive(Copy, Clone)]
-struct PosTexVertex {
-    position: [f64; 3],
-    texcoords: [f64; 2],
-}
-
-implement_vertex!(PosTexVertex, position, texcoords);
-
-impl Triangle {
-    fn new(vertices: [PosTexVertex; 3], camera: Camera<f64>) {
-        Triangle{vertices: vertices, camera: camera}
-    }
-}
-
-impl Node for Triangle {
-    fn draw(&self, surface: &mut Surface, display: &Facade) -> Result<(), DrawError> {
-        // Building the uniforms
-        let proj = PerspMat3::new(self.aspect_ratio, 63.0 / 180.0 * 3.14, 0.001, 1000.0);
-
-        // Draw a frame
-        let draw_params = {
-            let mut def: DrawParameters = std::default::Default::default();
-            def.depth_test = DepthTest::IfLessOrEqual;
-            def.backface_culling = BackfaceCullingMode::CullingDisabled;
-            def
-        };
-
-        let vertex_buffer = glium::vertex::VertexBuffer::new(display, &self.vertices);
-        let index_buffer = glium::index::IndexBuffer::new(display, glium::index::TrianglesList::new(vec![0, 1, 2]));
-        let program = glium::program::Program::new(display, glium::program::ProgramCreationInput::SourceCode{
-            vertex_shader: vertex_shader,
-            tessellation_control_shader: None,
-            tessellation_evaluation_shader: None,
-            geometry_shader: None,
-            fragment_shader: fragment_shader,
-            transform_feedback_varyings: None
+fn run_from_source<R, W, E, F, S>(source: &mut SourceWindow<W>, stream: &mut S,
+                                  mut render: F, element: E)
+    where R: Resources,
+          W: EventSource,
+          E: Element<R>,
+          S: Stream<R>,
+          F: FnMut(&mut S),
+{
+    use gfx::extra::stream::Stream;
+    source.run(|| {
+        stream.clear(gfx::ClearData {
+            color: [0.3, 0.3, 0.3, 1.0],
+            depth: 1.0,
+            stencil: 0,
         });
-
-        surface.draw(
-            &vertex_buffer, &index_buffer, &program,
-            &uniform! {
-                model_view_proj: self.camera.as_projection_matrix(),
-            },
-            &draw_params
-        )
-    }
+        for batch in element.batches() {
+            stream.draw(&batch).unwrap();
+        }
+        render(stream)
+    })
 }
 
-impl Node for EmptyNode {
-    fn draw(&self, surface: &mut Surface, display: &Facade) -> Result<(), DrawError> { Ok(()) }
-}
-
-/// Some trivial application logic
-fn app_logic<W: StreamingWindow>(window: &W) -> Signal<Model> {
-    Signal::new(Model)
-}
-
-/// A functional view
-fn view((width, height): (u32, u32), model: Model) -> Arc<Box<Node>> {
-        let data = &[
-            PosTexVertex {
-                position: [0.0, 0.0, 0.4],
-                texcoords: [0.0, 1.0]
-            },
-            PosTexVertex {
-                position: [12.0, 4.5, -1.8],
-                texcoords: [1.0, 0.5]
-            },
-            PosTexVertex {
-                position: [-7.124, 0.1, 0.0],
-                texcoords: [0.0, 0.4]
-            },
-        ];
-    Arc::new(Box::new(EmptyNode))
-}
 
 fn main() {
+    const GLVERSION: OpenGL = OpenGL::_2_1;
+    let settings = WindowSettings::new("gfx + carboxyl_window", (640, 480));
+    let window = Rc::new(RefCell::new(GlutinWindow::new(GLVERSION, settings)));
+    let (mut stream, mut device, mut factory) = shared_win::init_shared(window.clone());
+    let mut source = SourceWindow::new(window.clone(), 10_000_000);
 
+    let mut context = Context::new();
 
+    let batch = {
+        let vertex_data = [
+            Vertex { pos: [ -0.5, -0.5, -1.0 ], color: [1.0, 0.0, 0.0] },
+            Vertex { pos: [  0.5, -0.5, -1.0 ], color: [0.0, 1.0, 0.0] },
+            Vertex { pos: [  0.0,  0.5, -1.0 ], color: [0.0, 0.0, 1.0] },
+        ];
 
-    runners::run_glium(
-        WindowSettings::new("carboxyl_window :: example/simple.rs", (640, 480)),
-        |window| lift!(view, &window.size(), &app_logic(window))
+        let data = Params {
+            model_view_proj: cgmath::perspective(cgmath::deg(60.0f32),
+                                      stream.get_aspect_ratio(),
+                                      0.1, 1000.0
+                                      ).into_fixed(),
+            _r: std::marker::PhantomData,
+        };
+
+        let mesh = factory.create_mesh(&vertex_data);
+        let slice = mesh.to_slice(gfx::PrimitiveType::TriangleList);
+        let program = {
+            let vs = gfx::ShaderSource {
+                glsl_120: Some(include_bytes!("triangle_120.glslv")),
+                .. gfx::ShaderSource::empty()
+            };
+            let fs = gfx::ShaderSource {
+                glsl_120: Some(include_bytes!("triangle_120.glslf")),
+                .. gfx::ShaderSource::empty()
+            };
+            factory.link_program_source(vs, fs).unwrap()
+        };
+        let state = gfx::DrawState::new();
+        context.make_batch(&program, data, &mesh, slice, &state).ok().unwrap()
+    };
+
+    run_from_source(
+        &mut source, &mut stream,
+        |s| s.present(&mut device),
+        (&batch, &context),
     );
 }
