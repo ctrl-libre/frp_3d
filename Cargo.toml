@@ -40,15 +40,3 @@ git = "https://github.com/PistonDevelopers/shader_version"
 
 [dependencies.pistoncore-glutin_window]
 git = "https://github.com/PistonDevelopers/glutin_window"
-
-[dependencies.piston2d-graphics]
-git = "https://github.com/PistonDevelopers/graphics"
-
-[dependencies.glium]
-default-features = false
-
-[dependencies.piston2d-glium_graphics]
-git = "https://github.com/PistonDevelopers/glium_graphics"
-
-[dependencies.elmesque]
-git = "https://github.com/mitchmindtree/elmesque"
