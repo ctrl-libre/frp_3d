@@ -11,8 +11,6 @@ extern crate gfx_func;
 extern crate cgmath;
 
 use cgmath::FixedArray;
-use cgmath::{Matrix4, Point3, Vector3};
-use cgmath::{Transform, AffineMatrix3};
 use std::rc::Rc;
 use std::cell::RefCell;
 use carboxyl_window::{ SourceWindow, EventSource };
@@ -52,7 +50,7 @@ fn run_from_source<R, W, E, F, S>(source: &mut SourceWindow<W>, stream: &mut S,
             stencil: 0,
         });
         for batch in element.batches() {
-            stream.draw(&batch).unwrap();
+            stream.draw(batch).unwrap();
         }
         render(stream)
     })
