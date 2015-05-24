@@ -15,14 +15,14 @@ use cgmath::FixedArray;
 use std::rc::Rc;
 use std::cell::RefCell;
 use carboxyl::Signal;
-use carboxyl_window::{ SourceWindow, EventSource };
+use carboxyl_window::{ RunnableWindow, SourceWindow };
 use window::{ WindowSettings };
 use shader_version::OpenGL;
 use glutin_window::GlutinWindow;
 use gfx::traits::FactoryExt;
-use gfx::{ Stream, Resources };
+use gfx::{ Stream, ClearData };
 use gfx::batch::{ OwnedBatch };
-use gfx_func::{ Element };
+use gfx_func::element::{ Batch, Cleared, Draw };
 
 pub mod shared_win;
 
@@ -36,38 +36,14 @@ gfx_parameters!( Params {
     model_view_proj@ model_view_proj: [[f32; 4]; 4],
 });
 
-fn run_from_source<R, W, E, F, S>(source: &mut SourceWindow<W>, stream: &mut S,
-                                  mut render: F, element: Signal<E>)
-    where R: Resources,
-          W: EventSource,
-          E: Element<R> + Clone + Send + Sync + 'static,
-          S: Stream<R>,
-          F: FnMut(&mut S),
-{
-    use gfx::extra::stream::Stream;
-    source.run(|| {
-        stream.clear(gfx::ClearData {
-            color: [0.3, 0.3, 0.3, 1.0],
-            depth: 1.0,
-            stencil: 0,
-        });
-        let current = element.sample();
-        for batch in current.batches() {
-            stream.draw(batch).unwrap();
-        }
-        render(stream)
-    })
-}
-
-
 fn main() {
     const GLVERSION: OpenGL = OpenGL::_2_1;
     let settings = WindowSettings::new("gfx + carboxyl_window", (640, 480));
     let window = Rc::new(RefCell::new(GlutinWindow::new(GLVERSION, settings)));
     let (mut stream, mut device, mut factory) = shared_win::init_shared(window.clone());
-    let mut source = SourceWindow::new(window.clone(), 10_000_000);
+    let mut source = SourceWindow::new(window.clone());
 
-    let batch = {
+    let element = {
         let vertex_data = [
             Vertex { pos: [ -0.5, -0.5, -1.0 ], color: [1.0, 0.0, 0.0] },
             Vertex { pos: [  0.5, -0.5, -1.0 ], color: [0.0, 1.0, 0.0] },
@@ -94,12 +70,16 @@ fn main() {
             };
             factory.link_program_source(vs, fs).unwrap()
         };
-        OwnedBatch::new(mesh, program, data).unwrap()
+        Cleared::new(
+            ClearData { color: [0.3, 0.3, 0.3, 1.0], depth: 1.0, stencil: 0 },
+            Batch(OwnedBatch::new(mesh, program, data).unwrap()),
+        )
     };
+    let signal = Signal::new(element);
 
-    run_from_source(
-        &mut source, &mut stream,
-        |s| s.present(&mut device),
-        Signal::new(batch)
-    );
+    source.run_with(120.0, || {
+        let current = signal.sample();
+        current.draw(&mut stream);
+        stream.present(&mut device);
+    });
 }
