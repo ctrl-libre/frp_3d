@@ -11,12 +11,26 @@ license = "LGPL-3.0+"
 
 
 [dependencies]
-carboxyl = "*"
 image = "*"
 clock_ticks = "*"
+nalgebra = "*"
+num = "*"
+gfx = "*"
+gfx_device_gl = "*"
+glutin = "*"
+cgmath = "*"
+carboxyl = "0.1"
+time = "*"
 
 [dependencies.pistoncore-input]
 git = "https://github.com/PistonDevelopers/input"
+
+
+[dependencies.gfx_func]
+git = "https://github.com/aepsil0n/gfx-func"
+
+[dependencies.carboxyl_time]
+git = "https://github.com/aepsil0n/carboxyl_time"
 
 [dependencies.carboxyl_window]
 git = "https://github.com/aepsil0n/carboxyl_window"
@@ -24,24 +38,8 @@ git = "https://github.com/aepsil0n/carboxyl_window"
 [dependencies.pistoncore-window]
 git = "https://github.com/PistonDevelopers/window"
 
-
-[dependencies]
-glutin = "*"
-
 [dependencies.shader_version]
 git = "https://github.com/PistonDevelopers/shader_version"
 
 [dependencies.pistoncore-glutin_window]
 git = "https://github.com/PistonDevelopers/glutin_window"
-
-[dependencies.piston2d-graphics]
-git = "https://github.com/PistonDevelopers/graphics"
-
-[dependencies.glium]
-default-features = false
-
-[dependencies.piston2d-glium_graphics]
-git = "https://github.com/PistonDevelopers/glium_graphics"
-
-[dependencies.elmesque]
-git = "https://github.com/mitchmindtree/elmesque"
