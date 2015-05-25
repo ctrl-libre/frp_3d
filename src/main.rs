@@ -2,20 +2,23 @@
 extern crate gfx;
 extern crate gfx_device_gl;
 extern crate glutin;
+#[macro_use(lift)]
 extern crate carboxyl;
+extern crate carboxyl_time;
 extern crate carboxyl_window;
 extern crate window;
 extern crate input;
 extern crate shader_version;
 extern crate glutin_window;
 extern crate gfx_func;
-extern crate cgmath;
+extern crate time;
+extern crate nalgebra;
 
-use cgmath::FixedArray;
 use std::rc::Rc;
 use std::cell::RefCell;
-use carboxyl::Signal;
-use carboxyl_window::{ RunnableWindow, SourceWindow };
+use carboxyl_time::every;
+use carboxyl_window::{ SourceWindow, RunnableWindow, StreamingWindow };
+use carboxyl_window::button::Direction;
 use window::{ WindowSettings };
 use shader_version::OpenGL;
 use glutin_window::GlutinWindow;
@@ -23,6 +26,10 @@ use gfx::traits::FactoryExt;
 use gfx::{ Stream, ClearData };
 use gfx::batch::{ OwnedBatch };
 use gfx_func::element::{ Batch, Cleared, Draw };
+use gfx_func::cam::{ self, MovementState3 };
+use input::{ Button, Key };
+use time::Duration;
+use nalgebra::{ PerspMat3, Pnt3, cast };
 
 pub mod shared_win;
 
@@ -43,22 +50,39 @@ fn main() {
     let (mut stream, mut device, mut factory) = shared_win::init_shared(window.clone());
     let mut source = SourceWindow::new(window.clone());
 
-    let element = {
-        let vertex_data = [
+    let buttons = source.buttons();
+    let ticks = every(Duration::milliseconds(5))
+        .map(|dt| dt.num_milliseconds() as f64 / 1e3);
+    let relative = source.cursor()
+        .snapshot(&ticks, |pos, _| pos)
+        .scan(
+            ((0.0, 0.0), (0.0, 0.0)),
+            |(old, _), new| (new, (old.0 - new.0, old.1 - new.1))
+        )
+        .snapshot(&ticks, |(_, delta), _| delta);
+    let projection = lift!(
+        |(w, h)| PerspMat3::new(w as f64 / h as f64, 63.0 / 180.0 * 3.14, 0.001, 1000.0),
+        &source.size()
+    );
+    let camera = cam::fps_camera(
+        Pnt3::new(0.0, 0.0, 2.0),
+        &ticks,
+        &lift!(
+            MovementState3::new,
+            &Direction::track(&buttons, Button::Keyboard(Key::A), Button::Keyboard(Key::U)),
+            &Direction::track(&buttons, Button::Keyboard(Key::Space), Button::Keyboard(Key::LShift)),
+            &Direction::track(&buttons, Button::Keyboard(Key::I), Button::Keyboard(Key::V))
+        ),
+        &cam::space_attitude(&relative, 0.003),
+        &projection
+    );
+
+    let triangle = {
+        let mesh = factory.create_mesh(&[
             Vertex { pos: [ -0.5, -0.5, -1.0 ], color: [1.0, 0.0, 0.0] },
             Vertex { pos: [  0.5, -0.5, -1.0 ], color: [0.0, 1.0, 0.0] },
             Vertex { pos: [  0.0,  0.5, -1.0 ], color: [0.0, 0.0, 1.0] },
-        ];
-
-        let data = Params {
-            model_view_proj: cgmath::perspective(cgmath::deg(60.0f32),
-                                      stream.get_aspect_ratio(),
-                                      0.1, 1000.0
-                                      ).into_fixed(),
-            _r: std::marker::PhantomData,
-        };
-
-        let mesh = factory.create_mesh(&vertex_data);
+        ]);
         let program = {
             let vs = gfx::ShaderSource {
                 glsl_120: Some(include_bytes!("triangle_120.glslv")),
@@ -70,15 +94,22 @@ fn main() {
             };
             factory.link_program_source(vs, fs).unwrap()
         };
-        Cleared::new(
-            ClearData { color: [0.3, 0.3, 0.3, 1.0], depth: 1.0, stencil: 0 },
-            Batch(OwnedBatch::new(mesh, program, data).unwrap()),
+        lift!(
+            move |cam| {
+                let data = Params {
+                    model_view_proj: *cast::<_, nalgebra::Mat4<f32>>(cam.proj_view()).as_array(),
+                    _r: std::marker::PhantomData,
+                };
+                Batch(OwnedBatch::new(mesh.clone(), program.clone(), data).unwrap())
+            },
+            &camera
         )
     };
-    let signal = Signal::new(element);
+    let clear = ClearData { color: [0.3, 0.3, 0.3, 1.0], depth: 1.0, stencil: 0 };
+    let scene = lift!(move |elem| Cleared::new(clear, elem), &triangle);
 
     source.run_with(120.0, || {
-        let current = signal.sample();
+        let current = scene.sample();
         current.draw(&mut stream);
         stream.present(&mut device);
     });

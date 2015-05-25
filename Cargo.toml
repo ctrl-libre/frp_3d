@@ -19,8 +19,8 @@ gfx = "*"
 gfx_device_gl = "*"
 glutin = "*"
 cgmath = "*"
-carboxyl = "0.0.11"
-
+carboxyl = "0.1"
+time = "*"
 
 [dependencies.pistoncore-input]
 git = "https://github.com/PistonDevelopers/input"
@@ -28,6 +28,9 @@ git = "https://github.com/PistonDevelopers/input"
 
 [dependencies.gfx_func]
 git = "https://github.com/aepsil0n/gfx-func"
+
+[dependencies.carboxyl_time]
+git = "https://github.com/aepsil0n/carboxyl_time"
 
 [dependencies.carboxyl_window]
 git = "https://github.com/aepsil0n/carboxyl_window"
