@@ -1,13 +1,13 @@
 [package]
-name = "frp-test"
+name = "frp_3d"
 version = "0.0.1"
 authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
-description = "A opengl FRP test"
-homepage = "https://github.com/moredread/frp-test"
-repository = "https://github.com/moredread/frp-test"
+description = "A 3D FRP test project"
+homepage = "https://github.com/moredread/frp_3d"
+repository = "https://github.com/moredread/frp_3d"
 readme = "README.md"
 keywords = ["frp", "reactive", "event", "window"]
-license = "LGPL-3.0+"
+license = "GPL-3.0+"
 
 
 [dependencies]
