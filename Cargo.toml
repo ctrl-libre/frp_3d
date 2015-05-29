@@ -11,25 +11,18 @@ license = "GPL-3.0+"
 
 
 [dependencies]
-image = "*"
-clock_ticks = "*"
-nalgebra = "*"
-num = "*"
-glutin = "*"
-cgmath = "*"
-shader_version = "*"
-pistoncore-window = "*"
+image = "0.3"
+nalgebra = "0.2"
+num = "0.1"
+glutin = "0.1"
+shader_version = "0.1"
+pistoncore-window = "0.1"
 carboxyl = "0.1"
-time = "*"
-
-[dependencies.gfx]
-git = "https://github.com/gfx-rs/gfx-rs"
-
-[dependencies.gfx_device_gl]
-git = "https://github.com/gfx-rs/gfx_device_gl"
-
-[dependencies.pistoncore-input]
-git = "https://github.com/PistonDevelopers/input"
+time = "0.1"
+gfx = "0.6"
+gfx_device_gl = "0.4"
+pistoncore-input = "0.1"
+pistoncore-glutin_window = "0.1"
 
 [dependencies.gfx_func]
 git = "https://github.com/aepsil0n/gfx-func"
@@ -39,6 +32,3 @@ git = "https://github.com/aepsil0n/carboxyl_time"
 
 [dependencies.carboxyl_window]
 git = "https://github.com/aepsil0n/carboxyl_window"
-
-[dependencies.pistoncore-glutin_window]
-git = "https://github.com/PistonDevelopers/glutin_window"

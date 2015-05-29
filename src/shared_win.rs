@@ -84,8 +84,7 @@ pub fn init_shared<W: OpenGLWindow>(window: Rc<RefCell<W>>) -> Success<W> {
     
     let mut window_lock = window.borrow_mut();
     window_lock.make_current();
-    let device = gfx_device_gl::Device::new(|s| window_lock.get_proc_address(s));
-    let mut factory = device.spawn_factory();
+    let (device, mut factory) = gfx_device_gl::create(|s| window_lock.get_proc_address(s));
     let out = Output {
         window: window.clone(),
         frame: factory.get_main_frame_buffer(),
