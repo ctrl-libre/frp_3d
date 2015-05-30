@@ -23,8 +23,7 @@ use window::{ WindowSettings };
 use shader_version::OpenGL;
 use glutin_window::GlutinWindow;
 use gfx::traits::FactoryExt;
-use gfx::{ Stream, ClearData };
-use gfx::batch::{ OwnedBatch };
+use gfx::{ batch, Stream, ClearData };
 use gfx_func::element::{ Batch, Cleared, Draw };
 use gfx_func::cam::{ self, MovementState3 };
 use input::{ Button, Key };
@@ -100,7 +99,7 @@ fn main() {
                     model_view_proj: *cast::<_, nalgebra::Mat4<f32>>(cam.proj_view()).as_array(),
                     _r: std::marker::PhantomData,
                 };
-                Batch(OwnedBatch::new(mesh.clone(), program.clone(), data).unwrap())
+                Batch(batch::Full::new(mesh.clone(), program.clone(), data).unwrap())
             },
             &camera
         )
