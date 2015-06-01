@@ -42,6 +42,28 @@ gfx_parameters!( Params {
     model_view_proj@ model_view_proj: [[f32; 4]; 4],
 });
 
+struct ButtonConfig {
+    forward: Button,
+    backward: Button,
+    right: Button,
+    left: Button,
+    up: Button,
+    down: Button,
+}
+
+impl Default for ButtonConfig {
+    fn default() -> ButtonConfig {
+        ButtonConfig {
+            forward: Button::Keyboard(Key::W),
+            backward: Button::Keyboard(Key::S),
+            right: Button::Keyboard(Key::D),
+            left: Button::Keyboard(Key::A),
+            up: Button::Keyboard(Key::Space),
+            down: Button::Keyboard(Key::LShift),
+        }
+    }
+}
+
 fn main() {
     const GLVERSION: OpenGL = OpenGL::_2_1;
     let settings = WindowSettings::new("gfx + carboxyl_window", (640, 480));
@@ -63,14 +85,15 @@ fn main() {
         |(w, h)| PerspMat3::new(w as f64 / h as f64, 63.0 / 180.0 * 3.14, 0.001, 1000.0),
         &source.size()
     );
+    let button_config = ButtonConfig::default();
     let camera = cam::fps_camera(
         Pnt3::new(0.0, 0.0, 2.0),
         &ticks,
         &lift!(
             MovementState3::new,
-            &Direction::track(&buttons, Button::Keyboard(Key::A), Button::Keyboard(Key::U)),
-            &Direction::track(&buttons, Button::Keyboard(Key::Space), Button::Keyboard(Key::LShift)),
-            &Direction::track(&buttons, Button::Keyboard(Key::I), Button::Keyboard(Key::V))
+            &Direction::track(&buttons, button_config.right, button_config.left),
+            &Direction::track(&buttons, button_config.up, button_config.down),
+            &Direction::track(&buttons, button_config.backward, button_config.forward)
         ),
         &cam::space_attitude(&relative, 0.003),
         &projection
