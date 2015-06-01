@@ -23,6 +23,7 @@ gfx = "0.6"
 gfx_device_gl = "0.4"
 pistoncore-input = "0.1"
 pistoncore-glutin_window = "0.1"
+rustc-serialize = "0.3"
 
 [dependencies.gfx_func]
 git = "https://github.com/aepsil0n/gfx-func"

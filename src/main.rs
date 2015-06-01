@@ -13,6 +13,7 @@ extern crate glutin_window;
 extern crate gfx_func;
 extern crate time;
 extern crate nalgebra;
+extern crate rustc_serialize;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -29,6 +30,7 @@ use gfx_func::cam::{ self, MovementState3 };
 use input::{ Button, Key };
 use time::Duration;
 use nalgebra::{ PerspMat3, Pnt3, cast };
+use rustc_serialize::{Decodable, Decoder};
 
 pub mod shared_win;
 
@@ -42,6 +44,7 @@ gfx_parameters!( Params {
     model_view_proj@ model_view_proj: [[f32; 4]; 4],
 });
 
+#[derive(RustcDecodable, Clone)]
 struct ButtonConfig {
     forward: Button,
     backward: Button,
