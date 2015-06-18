@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Moredread/frp_3d.svg)](https://travis-ci.org/Moredread/frp_3d)
+[![Build Status](https://travis-ci.org/ctrl-libre/frp_3d.svg)](https://travis-ci.org/ctrl-libre/frp_3d)
 
 # frp_3d
 
